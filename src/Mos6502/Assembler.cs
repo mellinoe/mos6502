@@ -1,19 +1,33 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Globalization;
 using System.IO;
+
+using static Mos6502.OpcodeConstants;
 
 namespace Mos6502
 {
     public static class Assembler
     {
-        public static byte[] Assemble(string path)
+        private static readonly char[] s_lineFeed = { '\n' };
+
+        public static AssembledProgram AssembleFromFile(string path) => AssembleFromFile(path, 0);
+        public static AssembledProgram AssembleFromFile(string path, uint initialProgramCounter)
         {
             string[] lines = File.ReadAllLines(path);
-            return Assemble(lines);
+            return Assemble(lines, initialProgramCounter);
         }
 
-        private static byte[] Assemble(string[] lines)
+        public static AssembledProgram Assemble(string code) => Assemble(code, 0);
+        public static AssembledProgram Assemble(string code, uint initialProgramCounter)
+        {
+            string normalized = code.Replace("\r\n", "\n");
+            return Assemble(normalized.Split(s_lineFeed), initialProgramCounter);
+        }
+
+        public static AssembledProgram Assemble(string[] lines) => Assemble(lines, 0);
+        public static AssembledProgram Assemble(string[] lines, uint initialProgramCounter)
         {
             List<byte> bytes = new List<byte>();
             uint currentByte = 0;
@@ -29,7 +43,46 @@ namespace Mos6502
                 }
             }
 
-            return bytes.ToArray();
+            return new AssembledProgram(initialProgramCounter, bytes.ToArray());
+        }
+
+        public static byte GetOpcodeEncoding(OpcodeName opcodeName, AddressMode addressMode)
+        {
+            switch (opcodeName)
+            {
+                case OpcodeName.LDA:
+                    switch (addressMode)
+                    {
+                        case AddressMode.Immediate:
+                            return 0xA9;
+                        default: throw new NotImplementedException($"Address mode {addressMode} is not implemented for {opcodeName}.");
+                    }
+                case OpcodeName.LDX:
+                    switch (addressMode)
+                    {
+                        case AddressMode.Immediate:
+                            return 0xA2;
+                        default: throw new NotImplementedException($"Address mode {addressMode} is not implemented for {opcodeName}.");
+                    }
+                case OpcodeName.STA:
+                    switch (addressMode)
+                    {
+                        case AddressMode.Absolute:
+                            return 0x8D;
+                        default: throw new NotImplementedException($"Address mode {addressMode} is not implemented for {opcodeName}.");
+                    }
+                default: throw new NotImplementedException($"{opcodeName} is not implemented.");
+            }
+        }
+
+        public static uint GetEncodingLengthInBytes(byte opcode)
+        {
+            if (!s_opcodeOperandLengths.TryGetValue(opcode, out uint ret))
+            {
+                throw new InvalidOperationException($"No such opcode: {opcode}");
+            }
+
+            return ret;
         }
 
         private static AddressMode GetAddressMode(OpcodeName opcode, string[] tokens)
@@ -111,47 +164,50 @@ namespace Mos6502
             throw new NotImplementedException("Instruction could not be parsed: " + string.Join(" ", tokens));
         }
 
-        private static void WriteInstruction(List<byte> bytes, OpcodeName opcode, AddressMode addressMode, string[] tokens)
+        private static void WriteInstruction(List<byte> bytes, OpcodeName opcodeName, AddressMode addressMode, string[] tokens)
         {
-            switch (opcode)
+            byte opcodeEncoding = GetOpcodeEncoding(opcodeName, addressMode);
+            bytes.Add(opcodeEncoding);
+            uint numInstructionBytes = GetEncodingLengthInBytes(opcodeEncoding);
+
+            if (numInstructionBytes == 2)
             {
-                case OpcodeName.LDA:
-                    switch (addressMode)
-                    {
-                        case AddressMode.Immediate:
-                            bytes.Add(0xA9);
-                            if (tokens.Length < 2 || !tokens[1].StartsWith("#"))
-                            {
-                                throw new MalformedProgramException("LDA instruction with immediate address mode must have an operand starting with #");
-                            }
-                            bytes.Add(GetImmediateOperandByte(tokens[1]));
-                            break;
-                        default:
-                            throw new NotImplementedException();
-                    }
-                    break;
-                case OpcodeName.STA:
-                    switch (addressMode)
-                    {
-                        case AddressMode.Absolute:
-                            bytes.Add(0x8D);
-                            if (tokens.Length < 2 || !tokens[1].StartsWith("$") || tokens[1].Length != 5)
-                            {
-                                throw new MalformedProgramException("STA instruction with absolute address mode must have a 2-byte operand");
-                            }
-                            ushort address = GetAbsoluteOperand(tokens[1]);
-                            bytes.Add(Util.GetLowByte(address));
-                            bytes.Add(Util.GetHighByte(address));
-                            break;
-                        default:
-                            throw new NotImplementedException();
-                    }
-                    break;
+                // Single operand.
+                if (!GetOperandU8(tokens[1], out byte operand))
+                {
+                    throw new MalformedProgramException($"Not a valid 1-byte operand: {tokens[1]}.");
+                }
 
-                default:
-                    throw new NotImplementedException();
-
+                bytes.Add(operand);
             }
+            else if (numInstructionBytes == 3)
+            {
+                if (!GetOperandU16(tokens[1], out ushort operand))
+                {
+                    throw new MalformedProgramException($"Not a valid 2-byte operand: {tokens[1]}");
+                }
+
+                bytes.Add(Util.GetLowByte(operand));
+                bytes.Add(Util.GetHighByte(operand));
+            }
+        }
+
+        private static bool GetOperandU8(string operand, out byte value)
+        {
+            // TODO: Make sure the operand is only one byte, and fail if it isn't.
+            return byte.TryParse(NormalizeOperandString(operand), NumberStyles.HexNumber, CultureInfo.InvariantCulture, out value);
+        }
+
+        private static bool GetOperandU16(string operand, out ushort value)
+        {
+            // TODO: Check if the operand is actually long enough to be two bytes, and fail if it isn't.
+            return ushort.TryParse(NormalizeOperandString(operand), NumberStyles.HexNumber, CultureInfo.InvariantCulture, out value);
+        }
+
+        private static string NormalizeOperandString(string operand)
+        {
+            return operand.Replace("#", string.Empty).Replace("$", string.Empty)
+                .Replace("(", string.Empty).Replace(")", string.Empty).Replace(",", string.Empty);
         }
 
         private static byte GetImmediateOperandByte(string operand)
@@ -167,6 +223,14 @@ namespace Mos6502
             ushort value = ushort.Parse(operand.Substring(1), System.Globalization.NumberStyles.HexNumber);
             return value;
         }
+
+        private static readonly Dictionary<byte, uint> s_opcodeOperandLengths = new Dictionary<byte, uint>()
+        {
+            // Includes the 1 byte instruction opcode.
+            { STA_Absolute, 3 }, // STA, Absolute
+            { LDX_Immediate, 2 }, // LDX, Immediate
+            { LDA_Immediate, 2 }, // LDA, Immediate
+        };
     }
 
     public enum OpcodeName
@@ -245,5 +309,17 @@ namespace Mos6502
         ZeroPage,           //     zpg           OPC $LL             operand is of address; address hibyte = zero($00xx)
         ZeroPageXIndexed,   //     zpg, X        OPC $LL, X          operand is address incremented by X; address hibyte = zero($00xx); no page transition
         ZeroPageYIndexed,   //     zpg, Y        OPC $LL, Y          operand is address incremented by Y; address hibyte = zero($00xx); no page transition
+    }
+
+    public class AssembledProgram
+    {
+        public uint InitialProgramCounter { get; }
+        public byte[] Bytes { get; }
+
+        public AssembledProgram(uint initialProgramCounter, byte[] programBytes)
+        {
+            InitialProgramCounter = initialProgramCounter;
+            Bytes = programBytes;
+        }
     }
 }

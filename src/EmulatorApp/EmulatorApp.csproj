@@ -1,8 +1,11 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
+    <RootNamespace>Mos6502.EmulatorApp</RootNamespace>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <OutputType>Exe</OutputType>
     <TargetFramework>netcoreapp1.1</TargetFramework>
+    <PackageTargetFallback>portable-net45+win8+wpa81</PackageTargetFallback>
   </PropertyGroup>
 
   <ItemGroup>
@@ -17,6 +20,8 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Mos6502\Mos6502.csproj" />
+    <PackageReference Include="Veldrid" Version="1.0.0" />
+    <PackageReference Include="ImGui.NET" Version="0.1.8" />
   </ItemGroup>
 
 </Project>
