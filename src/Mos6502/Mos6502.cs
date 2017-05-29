@@ -47,6 +47,11 @@ namespace Mos6502
 
         public Opcode CurrentOpcode => _memory.ReadU8(_pc);
 
+        public Mos6502Cpu()
+        {
+            Reset();
+        }
+
         public void Reset()
         {
             _pc = _memory.ReadU16(ResetVectorAddress);

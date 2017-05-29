@@ -16,12 +16,14 @@
     <Content Include="testprogram.asm">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <EmbeddedResource Include="Assets/imgui-vertex.glsl" />
+    <EmbeddedResource Include="Assets/imgui-frag.glsl" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Mos6502\Mos6502.csproj" />
     <PackageReference Include="Veldrid" Version="1.0.0" />
-    <PackageReference Include="ImGui.NET" Version="0.1.8" />
+    <PackageReference Include="ImGui.NET" Version="0.1.9" />
   </ItemGroup>
 
 </Project>
