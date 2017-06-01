@@ -1,12 +1,9 @@
-﻿using Mos6502;
-using System;
-using OpenTK;
-using OpenTK.Graphics;
+﻿using System;
+using System.Reflection;
+using Veldrid;
 using Veldrid.Graphics;
 using Veldrid.Graphics.OpenGL;
 using Veldrid.Platform;
-using System.Reflection;
-using ImGuiNET;
 
 namespace Mos6502.EmulatorApp
 {

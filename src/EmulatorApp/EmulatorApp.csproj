@@ -22,7 +22,8 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Mos6502\Mos6502.csproj" />
-    <PackageReference Include="Veldrid" Version="1.0.0" />
+    <PackageReference Include="Veldrid" Version="1.0.2" />
+    <PackageReference Include="Veldrid.ImGui" Version="1.0.3" />
     <PackageReference Include="ImGui.NET" Version="0.1.9" />
   </ItemGroup>
 
