@@ -30,7 +30,6 @@ namespace Mos6502
         public static AssembledProgram Assemble(string[] lines, uint initialProgramCounter)
         {
             List<byte> bytes = new List<byte>();
-            uint currentByte = 0;
             foreach (string line in lines)
             {
                 string[] tokens = line.Split(' ');

@@ -1,11 +1,5 @@
-﻿using Mos6502;
-using System;
-using OpenTK;
-using OpenTK.Graphics;
-using Veldrid.Graphics;
-using Veldrid.Graphics.OpenGL;
-using Veldrid.Platform;
-using System.Reflection;
+﻿using System;
+using System.Numerics;
 using ImGuiNET;
 
 namespace Mos6502.EmulatorApp
@@ -13,6 +7,8 @@ namespace Mos6502.EmulatorApp
     public class Emulator
     {
         private readonly Mos6502Cpu _cpu;
+        private TextInputBuffer _assemblyTextInput = new TextInputBuffer(2048);
+        private string _statusText = string.Empty;
 
         public Emulator()
         {
@@ -32,6 +28,29 @@ namespace Mos6502.EmulatorApp
                 {
                     _cpu.Reset();
                 }
+
+                ImGui.InputTextMultiline("Code", _assemblyTextInput.Buffer, _assemblyTextInput.Length, new Vector2(400, 300), InputTextFlags.Default, null);
+                if (ImGui.Button("Load Program"))
+                {
+                    try
+                    {
+                        string text = _assemblyTextInput.ToString();
+                        var program = Assembler.Assemble(text, 0x100);
+                        _cpu.LoadProgram(program, 0x100);
+                        _cpu.Reset();
+                        _statusText = "Program assembled successfully. Total bytes: " + program.Bytes.Length;
+                    }
+                    catch (Exception e)
+                    {
+                        _statusText = "ERROR: " + e;
+                    }
+                }
+                if (ImGui.Button("Cycle"))
+                {
+                    _cpu.ProcessInstruction();
+                }
+
+                ImGui.Text("STATUS: " + _statusText);
             }
             ImGui.EndWindow();
         }
