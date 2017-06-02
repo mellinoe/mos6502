@@ -9,10 +9,13 @@ namespace Mos6502.EmulatorApp
         private readonly Mos6502Cpu _cpu;
         private TextInputBuffer _assemblyTextInput = new TextInputBuffer(2048);
         private string _statusText = string.Empty;
+        private MemoryEditor _memoryEditor;
 
         public Emulator()
         {
             _cpu = new Mos6502Cpu();
+            _memoryEditor = new MemoryEditor();
+            _memoryEditor.AllowEdits = false;
         }
 
         public void UpdateInterface()
@@ -53,6 +56,8 @@ namespace Mos6502.EmulatorApp
                 ImGui.Text("STATUS: " + _statusText);
             }
             ImGui.EndWindow();
+
+            _memoryEditor.Draw("RAM", _cpu.Memory.RawBytes, (int)_cpu.Memory.LengthInBytes);
         }
     }
 }

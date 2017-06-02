@@ -151,5 +151,7 @@ namespace Mos6502
         {
             Buffer.BlockCopy(bytes, 0, _bytes, (int)address, bytes.Length);
         }
+
+        public byte[] RawBytes => _bytes; // TODO: Don't expose this directly.
     }
 }
