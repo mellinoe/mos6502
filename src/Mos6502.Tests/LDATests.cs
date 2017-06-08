@@ -2,7 +2,7 @@
 
 namespace Mos6502.Tests
 {
-    public class OpcodeTests
+    public class LDATests
     {
         [Fact]
         public void LDA_Immediate()

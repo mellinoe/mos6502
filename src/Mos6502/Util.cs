@@ -48,11 +48,6 @@ namespace Mos6502
                 case AddressMode.Accumulator:
                 case AddressMode.Implied:
                     return 0;
-                case AddressMode.Absolute:
-                case AddressMode.Indirect:
-                    return 2;
-                case AddressMode.AbsoluteXIndexed:
-                case AddressMode.AbsoluteYIndexed:
                 case AddressMode.Immediate:
                 case AddressMode.IndirectYIndexed:
                 case AddressMode.XIndexedIndirect:
@@ -61,6 +56,11 @@ namespace Mos6502
                 case AddressMode.ZeroPageXIndexed:
                 case AddressMode.ZeroPageYIndexed:
                     return 1;
+                case AddressMode.Absolute:
+                case AddressMode.AbsoluteXIndexed:
+                case AddressMode.AbsoluteYIndexed:
+                case AddressMode.Indirect:
+                    return 2;
                 default: throw new InvalidOperationException("Invalid address mode: " + addressMode);
             }
         }

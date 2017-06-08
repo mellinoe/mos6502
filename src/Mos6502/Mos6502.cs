@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 
 namespace Mos6502
 {
@@ -87,9 +88,18 @@ namespace Mos6502
             Reset();
         }
 
+        public void ProcessInstruction(uint count)
+        {
+            for (uint i = 0; i < count; i++)
+            {
+                ProcessInstruction();
+            }
+        }
+
         public void ProcessInstruction()
         {
             Opcode opcode = CurrentOpcode;
+            OpcodeInfo info = OpcodeInfo.GetInfo(opcode);
             switch (opcode)
             {
                 case Opcode.ADC_Immediate:
@@ -121,22 +131,43 @@ namespace Mos6502
                     }
                 case Opcode.LDA_Immediate:
                     {
-                        byte operand = ReadOperandU8();
-                        _a = operand;
+                        _a = ReadOperandU8();
                         break;
                     }
                 case Opcode.LDX_Immediate:
                     {
-                        byte operand = ReadOperandU8();
-                        _x = operand;
+                        _x = ReadOperandU8();
+                        break;
+                    }
+                case Opcode.LDY_Immediate:
+                    {
+                        _y = ReadOperandU8();
                         break;
                     }
                 case Opcode.STA_Absolute:
+                case Opcode.STA_ZeroPage:
+                case Opcode.STA_ZeroPageXIndexed:
+                case Opcode.STA_AbsoluteXIndexed:
+                case Opcode.STA_AbsoluteYIndexed:
+                case Opcode.STA_XIndexedIndirect:
+                case Opcode.STA_IndirectYIndexed:
                     {
-                        ushort operand = ReadOperandU16();
-                        _memory.WriteU8(operand, _a);
+                        ushort operand;
+                        if (info.EncodingLength == 2)
+                        {
+                            operand = ReadOperandU8();
+                        }
+                        else
+                        {
+                            Debug.Assert(info.EncodingLength == 3);
+                            operand = ReadOperandU16();
+                        }
+
+                        ushort address = ComputeAddress(info.AddressMode, operand);
+                        _memory.WriteU8(address, _a);
                         break;
                     }
+                default: throw new NotImplementedException("Opcode is not implemented: " + opcode);
             }
 
             _pc = (ushort)(_pc + OpcodeInfo.GetInfo(opcode).EncodingLength);
@@ -161,6 +192,34 @@ namespace Mos6502
         private ushort ReadOperandU16()
         {
             return _memory.ReadU16(_pc + 1u);
+        }
+
+        private ushort ComputeAddress(AddressMode mode, ushort operand)
+        {
+            switch (mode)
+            {
+                case AddressMode.Absolute:
+                case AddressMode.Immediate:
+                case AddressMode.ZeroPage:
+                    return operand;
+                case AddressMode.AbsoluteXIndexed:
+                    return (ushort)(operand + _x);
+                case AddressMode.ZeroPageXIndexed:
+                    return (byte)(operand + _x);
+                case AddressMode.AbsoluteYIndexed:
+                    return (ushort)(operand + _y);
+                case AddressMode.ZeroPageYIndexed:
+                    return (byte)(operand + _y);
+                case AddressMode.Indirect:
+                    return _memory.ReadU16(operand);
+                case AddressMode.XIndexedIndirect:
+                    return _memory.ReadU16((byte)(operand + _x));
+                case AddressMode.IndirectYIndexed:
+                    return (ushort)(_memory.ReadU16(operand) + _y);
+                case AddressMode.Relative:
+                    return (ushort)(_pc + operand + 1); // TODO: This is probably wrong.
+                default: throw new InvalidOperationException("An address should not be computed with mode " + mode);
+            }
         }
 
         private const uint ResetVectorAddress = 0xFFFC;

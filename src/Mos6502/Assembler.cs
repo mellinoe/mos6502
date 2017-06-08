@@ -45,40 +45,16 @@ namespace Mos6502
 
         public static byte GetOpcodeEncoding(OpcodeName opcodeName, AddressMode addressMode)
         {
-            switch (opcodeName)
-            {
-                case OpcodeName.ADC:
-                    switch (addressMode)
-                    {
-                        case AddressMode.Absolute:
-                            return (byte)Opcode.ADC_Absolute;
-                        case AddressMode.Immediate:
-                            return (byte)Opcode.ADC_Immediate;
-                        default: throw NotImplemented(opcodeName, addressMode);
-                    }
-                case OpcodeName.LDA:
-                    switch (addressMode)
-                    {
-                        case AddressMode.Immediate:
-                            return (byte)Opcode.LDA_Immediate;
-                        default: throw NotImplemented(opcodeName, addressMode);
-                    }
-                case OpcodeName.LDX:
-                    switch (addressMode)
-                    {
-                        case AddressMode.Immediate:
-                            return (byte)Opcode.LDX_Immediate;
-                        default: throw NotImplemented(opcodeName, addressMode);
-                    }
-                case OpcodeName.STA:
-                    switch (addressMode)
-                    {
-                        case AddressMode.Absolute:
-                            return (byte)Opcode.STA_Absolute;
-                        default: throw NotImplemented(opcodeName, addressMode);
+            // TODO: When all opcodes are implemented, stop doing string concatenation and parsing, and hard-code a table.
 
-                    }
-                default: throw NotImplemented(opcodeName, addressMode);
+            string enumString = opcodeName.ToString() + "_" + addressMode.ToString();
+            if (!Enum.TryParse(enumString, out Opcode opcode))
+            {
+                throw NotImplemented(opcodeName, addressMode);
+            }
+            else
+            {
+                return (byte)opcode;
             }
         }
 
@@ -209,7 +185,8 @@ namespace Mos6502
         private static string NormalizeOperandString(string operand)
         {
             return operand.Replace("#", string.Empty).Replace("$", string.Empty)
-                .Replace("(", string.Empty).Replace(")", string.Empty).Replace(",", string.Empty);
+                .Replace("(", string.Empty).Replace(")", string.Empty).Replace(",", string.Empty)
+                .Replace("X", string.Empty).Replace("Y", string.Empty);
         }
 
         private static byte GetImmediateOperandByte(string operand)
