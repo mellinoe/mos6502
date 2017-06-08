@@ -27,6 +27,7 @@ namespace Mos6502.EmulatorApp
                 ImGui.Text($"Y: 0x{_cpu.Y.ToString("X2")}");
                 ImGui.Text($"PC: 0x{_cpu.PC.ToString("X4")}");
                 ImGui.Text($"SP: 0x{_cpu.SP.ToString("X2")}");
+                ImGui.Text($"Flags: 0b{Util.GetBitFlagString(_cpu.P)}");
                 if (ImGui.Button("Reset"))
                 {
                     _cpu.Reset();

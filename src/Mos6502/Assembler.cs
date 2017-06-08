@@ -49,29 +49,44 @@ namespace Mos6502
         {
             switch (opcodeName)
             {
+                case OpcodeName.ADC:
+                    switch (addressMode)
+                    {
+                        case AddressMode.Absolute:
+                            return ADC_Absolute;
+                        case AddressMode.Immediate:
+                            return ADC_Immediate;
+                        default: throw NotImplemented(opcodeName, addressMode);
+                    }
                 case OpcodeName.LDA:
                     switch (addressMode)
                     {
                         case AddressMode.Immediate:
-                            return 0xA9;
-                        default: throw new NotImplementedException($"Address mode {addressMode} is not implemented for {opcodeName}.");
+                            return LDA_Immediate;
+                        default: throw NotImplemented(opcodeName, addressMode);
                     }
                 case OpcodeName.LDX:
                     switch (addressMode)
                     {
                         case AddressMode.Immediate:
-                            return 0xA2;
-                        default: throw new NotImplementedException($"Address mode {addressMode} is not implemented for {opcodeName}.");
+                            return LDX_Immediate;
+                        default: throw NotImplemented(opcodeName, addressMode);
                     }
                 case OpcodeName.STA:
                     switch (addressMode)
                     {
                         case AddressMode.Absolute:
-                            return 0x8D;
-                        default: throw new NotImplementedException($"Address mode {addressMode} is not implemented for {opcodeName}.");
+                            return STA_Absolute;
+                        default: throw NotImplemented(opcodeName, addressMode);
+
                     }
-                default: throw new NotImplementedException($"{opcodeName} is not implemented.");
+                default: throw NotImplemented(opcodeName, addressMode);
             }
+        }
+
+        private static Exception NotImplemented(OpcodeName opcodeName, AddressMode addressMode)
+        {
+            return new NotImplementedException($"Address mode {addressMode} is not implemented for {opcodeName}.");
         }
 
         public static uint GetEncodingLengthInBytes(byte opcode)
@@ -226,9 +241,11 @@ namespace Mos6502
         private static readonly Dictionary<byte, uint> s_opcodeOperandLengths = new Dictionary<byte, uint>()
         {
             // Includes the 1 byte instruction opcode.
-            { STA_Absolute, 3 }, // STA, Absolute
-            { LDX_Immediate, 2 }, // LDX, Immediate
-            { LDA_Immediate, 2 }, // LDA, Immediate
+            { ADC_Immediate, 2 },
+            { ADC_Absolute, 3 },
+            { STA_Absolute, 3 },
+            { LDX_Immediate, 2 },
+            { LDA_Immediate, 2 },
         };
     }
 

@@ -34,6 +34,16 @@ namespace Mos6502
         /// </summary>
         private byte _p;
 
+        // Processor flags:
+        // Bit 0: Carry flag
+        // Bit 1: Zero flag
+        // Bit 2: Interrupt flag
+        // Bit 3: Decimal flag
+        // Bit 4: Break flag
+        // Bit 5: Unused
+        // Bit 6: Overflow flag
+        // Bit 7: Negative flag
+
         private Memory _memory = new Memory(0x10000);
 
         public byte A => _a;
@@ -42,6 +52,10 @@ namespace Mos6502
         public byte SP => _sp;
         public ushort PC => _pc;
         public byte P => _p;
+
+        public bool CarryFlag { get => Util.GetBit(_p, 0); set => _p = Util.SetBit(_p, 0, value); }
+
+        public bool DecimalFlag { get => Util.GetBit(_p, 3); set => _p = Util.SetBit(_p, 3, value); }
 
         public Memory Memory => _memory;
 
@@ -77,30 +91,78 @@ namespace Mos6502
 
         public void ProcessInstruction()
         {
-            switch (CurrentOpcode)
+            byte opcode = CurrentOpcode;
+            switch (opcode)
             {
+                case ADC_Immediate:
+                    {
+                        if (DecimalFlag)
+                        {
+                            throw new NotImplementedException("BCD arithmetic is not implemented.");
+                        }
+                        else
+                        {
+                            byte operand = ReadOperandU8();
+                            AddWithCarry(operand);
+                        }
+                        break;
+                    }
+                case ADC_Absolute:
+                    {
+                        if (DecimalFlag)
+                        {
+                            throw new NotImplementedException("BCD arithmetic is not implemented.");
+                        }
+                        else
+                        {
+                            ushort operand = ReadOperandU16();
+                            byte value = _memory.ReadU8(operand);
+                            AddWithCarry(value);
+                        }
+                        break;
+                    }
                 case LDA_Immediate:
-                {
-                    byte operand = _memory.ReadU8(_pc + 1u);
-                    _a = operand;
-                    _pc = (ushort)(_pc + 2u);
-                    break;
-                }
+                    {
+                        byte operand = ReadOperandU8();
+                        _a = operand;
+                        break;
+                    }
                 case LDX_Immediate:
-                {
-                    byte operand = _memory.ReadU8(_pc + 1u);
-                    _x = operand;
-                    _pc = (ushort)(_pc + 2u);
-                    break;
-                }
+                    {
+                        byte operand = ReadOperandU8();
+                        _x = operand;
+                        break;
+                    }
                 case STA_Absolute:
-                {
-                    ushort operand = _memory.ReadU16(_pc + 1u);
-                    _memory.WriteU8(operand, _a);
-                    _pc = (ushort)(_pc + 3u);
-                    break;
-                }
+                    {
+                        ushort operand = ReadOperandU16();
+                        _memory.WriteU8(operand, _a);
+                        break;
+                    }
             }
+
+            _pc = (ushort)(_pc + Assembler.GetEncodingLengthInBytes(opcode));
+        }
+
+        private void AddWithCarry(byte value)
+        {
+            int result = _a + value;
+            if (result > byte.MaxValue)
+            {
+                CarryFlag = true;
+            }
+
+            _a = (byte)result;
+        }
+
+        private byte ReadOperandU8()
+        {
+            return _memory.ReadU8(_pc + 1u);
+        }
+
+        private ushort ReadOperandU16()
+        {
+            return _memory.ReadU16(_pc + 1u);
         }
 
         private const uint ResetVectorAddress = 0xFFFC;
