@@ -89,6 +89,7 @@ namespace Mos6502
             return new NotImplementedException($"Address mode {addressMode} is not implemented for {opcodeName}.");
         }
 
+        public static uint GetEncodingLengthInBytes(Opcode opcode) => GetEncodingLengthInBytes((byte)opcode);
         public static uint GetEncodingLengthInBytes(byte opcode)
         {
             if (!s_opcodeOperandLengths.TryGetValue(opcode, out uint ret))

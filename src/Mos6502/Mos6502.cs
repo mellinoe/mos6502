@@ -59,7 +59,7 @@ namespace Mos6502
 
         public Memory Memory => _memory;
 
-        public Opcode CurrentOpcode => _memory.ReadU8(_pc);
+        public Opcode CurrentOpcode => (Opcode)_memory.ReadU8(_pc);
 
         public Mos6502Cpu()
         {
@@ -91,10 +91,10 @@ namespace Mos6502
 
         public void ProcessInstruction()
         {
-            byte opcode = CurrentOpcode;
+            Opcode opcode = CurrentOpcode;
             switch (opcode)
             {
-                case ADC_Immediate:
+                case Opcode.ADC_Immediate:
                     {
                         if (DecimalFlag)
                         {
@@ -107,7 +107,7 @@ namespace Mos6502
                         }
                         break;
                     }
-                case ADC_Absolute:
+                case Opcode.ADC_Absolute:
                     {
                         if (DecimalFlag)
                         {
@@ -121,19 +121,19 @@ namespace Mos6502
                         }
                         break;
                     }
-                case LDA_Immediate:
+                case Opcode.LDA_Immediate:
                     {
                         byte operand = ReadOperandU8();
                         _a = operand;
                         break;
                     }
-                case LDX_Immediate:
+                case Opcode.LDX_Immediate:
                     {
                         byte operand = ReadOperandU8();
                         _x = operand;
                         break;
                     }
-                case STA_Absolute:
+                case Opcode.STA_Absolute:
                     {
                         ushort operand = ReadOperandU16();
                         _memory.WriteU8(operand, _a);
