@@ -1,7 +1,5 @@
 ﻿using System;
 
-using static Mos6502.OpcodeConstants;
-
 namespace Mos6502
 {
     /// <summary>
@@ -141,7 +139,7 @@ namespace Mos6502
                     }
             }
 
-            _pc = (ushort)(_pc + Assembler.GetEncodingLengthInBytes(opcode));
+            _pc = (ushort)(_pc + OpcodeInfo.GetInfo(opcode).EncodingLength);
         }
 
         private void AddWithCarry(byte value)

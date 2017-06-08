@@ -4,8 +4,6 @@ using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 
-using static Mos6502.OpcodeConstants;
-
 namespace Mos6502
 {
     public static class Assembler
@@ -53,30 +51,30 @@ namespace Mos6502
                     switch (addressMode)
                     {
                         case AddressMode.Absolute:
-                            return ADC_Absolute;
+                            return (byte)Opcode.ADC_Absolute;
                         case AddressMode.Immediate:
-                            return ADC_Immediate;
+                            return (byte)Opcode.ADC_Immediate;
                         default: throw NotImplemented(opcodeName, addressMode);
                     }
                 case OpcodeName.LDA:
                     switch (addressMode)
                     {
                         case AddressMode.Immediate:
-                            return LDA_Immediate;
+                            return (byte)Opcode.LDA_Immediate;
                         default: throw NotImplemented(opcodeName, addressMode);
                     }
                 case OpcodeName.LDX:
                     switch (addressMode)
                     {
                         case AddressMode.Immediate:
-                            return LDX_Immediate;
+                            return (byte)Opcode.LDX_Immediate;
                         default: throw NotImplemented(opcodeName, addressMode);
                     }
                 case OpcodeName.STA:
                     switch (addressMode)
                     {
                         case AddressMode.Absolute:
-                            return STA_Absolute;
+                            return (byte)Opcode.STA_Absolute;
                         default: throw NotImplemented(opcodeName, addressMode);
 
                     }
@@ -87,17 +85,6 @@ namespace Mos6502
         private static Exception NotImplemented(OpcodeName opcodeName, AddressMode addressMode)
         {
             return new NotImplementedException($"Address mode {addressMode} is not implemented for {opcodeName}.");
-        }
-
-        public static uint GetEncodingLengthInBytes(Opcode opcode) => GetEncodingLengthInBytes((byte)opcode);
-        public static uint GetEncodingLengthInBytes(byte opcode)
-        {
-            if (!s_opcodeOperandLengths.TryGetValue(opcode, out uint ret))
-            {
-                throw new InvalidOperationException($"No such opcode: {opcode}");
-            }
-
-            return ret;
         }
 
         private static AddressMode GetAddressMode(OpcodeName opcode, string[] tokens)
@@ -183,7 +170,7 @@ namespace Mos6502
         {
             byte opcodeEncoding = GetOpcodeEncoding(opcodeName, addressMode);
             bytes.Add(opcodeEncoding);
-            uint numInstructionBytes = GetEncodingLengthInBytes(opcodeEncoding);
+            uint numInstructionBytes = 1u + Util.GetEncodingLength(addressMode);
 
             if (numInstructionBytes == 2)
             {
@@ -238,94 +225,6 @@ namespace Mos6502
             ushort value = ushort.Parse(operand.Substring(1), System.Globalization.NumberStyles.HexNumber);
             return value;
         }
-
-        private static readonly Dictionary<byte, uint> s_opcodeOperandLengths = new Dictionary<byte, uint>()
-        {
-            // Includes the 1 byte instruction opcode.
-            { ADC_Immediate, 2 },
-            { ADC_Absolute, 3 },
-            { STA_Absolute, 3 },
-            { LDX_Immediate, 2 },
-            { LDA_Immediate, 2 },
-        };
-    }
-
-    public enum OpcodeName
-    {
-        ADC, // add with carry
-        AND, // and (with accumulator)
-        ASL, // arithmetic shift left
-        BCC, // branch on carry clear
-        BCS, // branch on carry set
-        BEQ, // branch on equal (zero set)
-        BIT, // bit test
-        BMI, // branch on minus (negative set)
-        BNE, // branch on not equal (zero clear)
-        BPL, // branch on plus (negative clear)
-        BRK, // interrupt
-        BVC, // branch on overflow clear
-        BVS, // branch on overflow set
-        CLC, // clear carry
-        CLD, // clear decimal
-        CLI, // clear interrupt disable
-        CLV, // clear overflow
-        CMP, // compare (with accumulator)
-        CPX, // compare with X
-        CPY, // compare with Y
-        DEC, // decrement
-        DEX, // decrement X
-        DEY, // decrement Y
-        EOR, // exclusive or (with accumulator)
-        INC, // increment
-        INX, // increment X
-        INY, // increment Y
-        JMP, // jump
-        JSR, // jump subroutine
-        LDA, // load accumulator
-        LDX, // load X
-        LDY, // load Y
-        LSR, // logical shift right
-        NOP, // no operation
-        ORA, // or with accumulator
-        PHA, // push accumulator
-        PHP, // push processor status (SR)
-        PLA, // pull accumulator
-        PLP, // pull processor status (SR)
-        ROL, // rotate left
-        ROR, // rotate right
-        RTI, // return from interrupt
-        RTS, // return from subroutine
-        SBC, // subtract with carry
-        SEC, // set carry
-        SED, // set decimal
-        SEI, // set interrupt disable
-        STA, // store accumulator
-        STX, // store X
-        STY, // store Y
-        TAX, // transfer accumulator to X
-        TAY, // transfer accumulator to Y
-        TSX, // transfer stack pointer to X
-        TXA, // transfer X to accumulator
-        TXS, // transfer X to stack pointer
-        TYA, // transfer Y to accumulator
-    }
-
-    public enum AddressMode
-    {
-        // Name             //     Form          Dissassembly        Description
-        Accumulator,        //     A             OPC A               operand is AC
-        Absolute,           //     abs           OPC $HHLL           operand is address $HHLL
-        AbsoluteXIndexed,   //     abs, X        OPC $HHLL, X        operand is address incremented by X with carry
-        AbsoluteYIndexed,   //     abs, Y        OPC $HHLL, Y        operand is address incremented by Y with carry
-        Immediate,          //     #             OPC #$BB            operand is byte (BB)
-        Implied,            //     impl          OPC                 operand implied
-        Indirect,           //     ind           OPC ($HHLL)         operand is effective address; effective address is value of address
-        XIndexedIndirect,   //     X, ind        OPC ($BB, X)        operand is effective zeropage address; effective address is byte (BB) incremented by X without carry
-        IndirectYIndexed,   //     ind, Y        OPC ($LL), Y        operand is effective address incremented by Y with carry; effective address is word at zeropage address
-        Relative,           //     rel           OPC $BB             branch target is PC + offset (BB), bit 7 signifies negative offset
-        ZeroPage,           //     zpg           OPC $LL             operand is of address; address hibyte = zero($00xx)
-        ZeroPageXIndexed,   //     zpg, X        OPC $LL, X          operand is address incremented by X; address hibyte = zero($00xx); no page transition
-        ZeroPageYIndexed,   //     zpg, Y        OPC $LL, Y          operand is address incremented by Y; address hibyte = zero($00xx); no page transition
     }
 
     public class AssembledProgram

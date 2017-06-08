@@ -40,5 +40,29 @@ namespace Mos6502
 
             return sb.ToString();
         }
+
+        public static byte GetEncodingLength(AddressMode addressMode)
+        {
+            switch (addressMode)
+            {
+                case AddressMode.Accumulator:
+                case AddressMode.Implied:
+                    return 0;
+                case AddressMode.Absolute:
+                case AddressMode.Indirect:
+                    return 2;
+                case AddressMode.AbsoluteXIndexed:
+                case AddressMode.AbsoluteYIndexed:
+                case AddressMode.Immediate:
+                case AddressMode.IndirectYIndexed:
+                case AddressMode.XIndexedIndirect:
+                case AddressMode.Relative:
+                case AddressMode.ZeroPage:
+                case AddressMode.ZeroPageXIndexed:
+                case AddressMode.ZeroPageYIndexed:
+                    return 1;
+                default: throw new InvalidOperationException("Invalid address mode: " + addressMode);
+            }
+        }
     }
 }
