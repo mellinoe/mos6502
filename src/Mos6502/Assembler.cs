@@ -136,7 +136,7 @@ namespace Mos6502
             }
             else
             {
-                return AddressMode.Implied;
+                return AddressMode.Implicit;
             }
 
             throw new NotImplementedException("Instruction could not be parsed: " + string.Join(" ", tokens));

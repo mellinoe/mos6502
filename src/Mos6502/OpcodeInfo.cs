@@ -57,7 +57,7 @@ namespace Mos6502
                 }
                 if (!Enum.TryParse(addressModeString, out AddressMode addressMode))
                 {
-                    throw new InvalidOperationException("Badly formatted opcode name: " + nameString);
+                    throw new InvalidOperationException("Badly formatted address mode: " + addressModeString);
                 }
 
                 infos.Add((byte)opcode, new OpcodeInfo((byte)opcode, name, addressMode));

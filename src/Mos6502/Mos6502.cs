@@ -53,8 +53,12 @@ namespace Mos6502
         public byte P => _p;
 
         public bool CarryFlag { get => Util.GetBit(_p, 0); set => _p = Util.SetBit(_p, 0, value); }
-
+        public bool ZeroFlag { get => Util.GetBit(_p, 1); set => _p = Util.SetBit(_p, 1, value); }
+        public bool InterruptMask { get => Util.GetBit(_p, 2); set => _p = Util.SetBit(_p, 2, value); }
         public bool DecimalFlag { get => Util.GetBit(_p, 3); set => _p = Util.SetBit(_p, 3, value); }
+        public bool BreakFlag { get => Util.GetBit(_p, 4); set => _p = Util.SetBit(_p, 4, value); }
+        public bool OverflowFlag { get => Util.GetBit(_p, 6); set => _p = Util.SetBit(_p, 6, value); }
+        public bool NegativeFlag { get => Util.GetBit(_p, 7); set => _p = Util.SetBit(_p, 7, value); }
 
         public Memory Memory => _memory;
 
@@ -115,7 +119,13 @@ namespace Mos6502
                         }
                         break;
                     }
+                case Opcode.ADC_ZeroPage:
+                case Opcode.ADC_ZeroPageXIndexed:
                 case Opcode.ADC_Absolute:
+                case Opcode.ADC_AbsoluteXIndexed:
+                case Opcode.ADC_AbsoluteYIndexed:
+                case Opcode.ADC_XIndexedIndirect:
+                case Opcode.ADC_IndirectYIndexed:
                     {
                         if (DecimalFlag)
                         {
@@ -123,8 +133,9 @@ namespace Mos6502
                         }
                         else
                         {
-                            ushort operand = ReadOperandU16();
-                            byte value = _memory.ReadU8(operand);
+                            ushort operand = ReadOperand(info.EncodingLength);
+                            ushort address = ComputeAddress(info.AddressMode, operand);
+                            byte value = _memory.ReadU8(address);
                             AddWithCarry(value);
                         }
                         break;
@@ -134,14 +145,48 @@ namespace Mos6502
                         _a = ReadOperandU8();
                         break;
                     }
+                case Opcode.LDA_ZeroPage:
+                case Opcode.LDA_ZeroPageXIndexed:
+                case Opcode.LDA_Absolute:
+                case Opcode.LDA_AbsoluteXIndexed:
+                case Opcode.LDA_AbsoluteYIndexed:
+                case Opcode.LDA_XIndexedIndirect:
+                case Opcode.LDA_IndirectYIndexed:
+                    {
+                        ushort operand = ReadOperand(info.EncodingLength);
+                        ushort address = ComputeAddress(info.AddressMode, operand);
+                        _a = _memory.ReadU8(address);
+                        break;
+                    }
+
                 case Opcode.LDX_Immediate:
                     {
                         _x = ReadOperandU8();
                         break;
                     }
+                case Opcode.LDX_Absolute:
+                case Opcode.LDX_AbsoluteYIndexed:
+                case Opcode.LDX_ZeroPage:
+                case Opcode.LDX_ZeroPageYIndexed:
+                    {
+                        ushort operand = ReadOperand(info.EncodingLength);
+                        ushort address = ComputeAddress(info.AddressMode, operand);
+                        _x = _memory.ReadU8(address);
+                        break;
+                    }
                 case Opcode.LDY_Immediate:
                     {
                         _y = ReadOperandU8();
+                        break;
+                    }
+                case Opcode.LDY_Absolute:
+                case Opcode.LDY_AbsoluteXIndexed:
+                case Opcode.LDY_ZeroPage:
+                case Opcode.LDY_ZeroPageXIndexed:
+                    {
+                        ushort operand = ReadOperand(info.EncodingLength);
+                        ushort address = ComputeAddress(info.AddressMode, operand);
+                        _y = _memory.ReadU8(address);
                         break;
                     }
                 case Opcode.STA_Absolute:
@@ -152,19 +197,67 @@ namespace Mos6502
                 case Opcode.STA_XIndexedIndirect:
                 case Opcode.STA_IndirectYIndexed:
                     {
-                        ushort operand;
-                        if (info.EncodingLength == 2)
-                        {
-                            operand = ReadOperandU8();
-                        }
-                        else
-                        {
-                            Debug.Assert(info.EncodingLength == 3);
-                            operand = ReadOperandU16();
-                        }
-
+                        ushort operand = ReadOperand(info.EncodingLength);
                         ushort address = ComputeAddress(info.AddressMode, operand);
                         _memory.WriteU8(address, _a);
+                        break;
+                    }
+                case Opcode.TAX_Implicit:
+                    {
+                        _x = _a;
+                        break;
+                    }
+                case Opcode.TXA_Implicit:
+                    {
+                        _a = _x;
+                        break;
+                    }
+                case Opcode.TAY_Implicit:
+                    {
+                        _y = _a;
+                        break;
+                    }
+                case Opcode.TYA_Implicit:
+                    {
+                        _a = _y;
+                        break;
+                    }
+                case Opcode.TSX_Implicit:
+                    {
+                        _x = _sp;
+                        break;
+                    }
+                case Opcode.TXS_Implicit:
+                    {
+                        _sp = _x;
+                        break;
+                    }
+                case Opcode.INX_Implicit:
+                    {
+                        _x = (byte)(_x + 1);
+                        NegativeFlag = Util.GetBit(_x, 7);
+                        ZeroFlag = (_x == 0);
+                        break;
+                    }
+                case Opcode.INY_Implicit:
+                    {
+                        _y = (byte)(_y + 1);
+                        NegativeFlag = Util.GetBit(_y, 7);
+                        ZeroFlag = (_y == 0);
+                        break;
+                    }
+                case Opcode.INC_Absolute:
+                case Opcode.INC_AbsoluteXIndexed:
+                case Opcode.INC_ZeroPage:
+                case Opcode.INC_ZeroPageXIndexed:
+                    {
+                        ushort operand = ReadOperand(info.EncodingLength);
+                        ushort address = ComputeAddress(info.AddressMode, operand);
+                        byte value = _memory.ReadU8(address);
+                        value = (byte)(value + 1);
+                        _memory.WriteU8(address, value);
+                        NegativeFlag = Util.GetBit(value, 7);
+                        ZeroFlag = (value == 0);
                         break;
                     }
                 default: throw new NotImplementedException("Opcode is not implemented: " + opcode);
@@ -192,6 +285,13 @@ namespace Mos6502
         private ushort ReadOperandU16()
         {
             return _memory.ReadU16(_pc + 1u);
+        }
+
+        private ushort ReadOperand(byte instructionEncodingLength)
+        {
+            Debug.Assert(instructionEncodingLength == 2 || instructionEncodingLength == 3);
+            int operandBytes = instructionEncodingLength - 1;
+            return operandBytes == 1 ? ReadOperandU8() : ReadOperandU16();
         }
 
         private ushort ComputeAddress(AddressMode mode, ushort operand)

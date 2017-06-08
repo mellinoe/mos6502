@@ -85,5 +85,71 @@ ADC $0301");
             Assert.Equal(0, cpu.A);
             Assert.Equal(true, cpu.CarryFlag);
         }
+
+        [Fact]
+        public void ADC_ZeroPage()
+        {
+            var cpu = TestUtil.CpuWithProgram("ADC $50");
+            cpu.Memory.WriteU8(0x50, 0x10);
+            cpu.ProcessInstruction();
+            Assert.Equal(0x10, cpu.A);
+        }
+
+        [Fact]
+        public void ADC_ZeroPageXIndexed()
+        {
+            var cpu = TestUtil.CpuWithProgram(
+@"LDX #05
+ADC $50,X");
+            cpu.Memory.WriteU8(0x55, 0x10);
+            cpu.ProcessInstruction(2);
+            Assert.Equal(0x10, cpu.A);
+        }
+
+        [Fact]
+        public void ADC_AbsoluteXIndexed()
+        {
+            var cpu = TestUtil.CpuWithProgram(
+@"LDX #05
+ADC $4000,X");
+            cpu.Memory.WriteU8(0x4005, 0x10);
+            cpu.ProcessInstruction(2);
+            Assert.Equal(0x10, cpu.A);
+        }
+
+        [Fact]
+        public void ADC_AbsoluteYIndexed()
+        {
+            var cpu = TestUtil.CpuWithProgram(
+@"LDY #05
+ADC $4000,Y");
+            cpu.Memory.WriteU8(0x4005, 0x10);
+            cpu.ProcessInstruction(2);
+            Assert.Equal(0x10, cpu.A);
+        }
+
+        [Fact]
+        public void ADC_XIndexedIndirect()
+        {
+            var cpu = TestUtil.CpuWithProgram(
+@"LDX #05
+ADC ($50,X)");
+            cpu.Memory.WriteU16(0x55, 0x4000);
+            cpu.Memory.WriteU8(0x4000, 0xFF);
+            cpu.ProcessInstruction(2);
+            Assert.Equal(0xFF, cpu.A);
+        }
+
+        [Fact]
+        public void ADC_IndirectYIndexed()
+        {
+            var cpu = TestUtil.CpuWithProgram(
+@"LDY #05
+ADC ($50),Y");
+            cpu.Memory.WriteU16(0x50, 0x4000);
+            cpu.Memory.WriteU8(0x4005, 0xFF);
+            cpu.ProcessInstruction(2);
+            Assert.Equal(0xFF, cpu.A);
+        }
     }
 }

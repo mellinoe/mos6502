@@ -46,7 +46,7 @@ namespace Mos6502
             switch (addressMode)
             {
                 case AddressMode.Accumulator:
-                case AddressMode.Implied:
+                case AddressMode.Implicit:
                     return 0;
                 case AddressMode.Immediate:
                 case AddressMode.IndirectYIndexed:

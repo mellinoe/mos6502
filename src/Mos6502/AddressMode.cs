@@ -8,7 +8,7 @@
         AbsoluteXIndexed,   //     abs, X        OPC $HHLL, X        operand is address incremented by X with carry
         AbsoluteYIndexed,   //     abs, Y        OPC $HHLL, Y        operand is address incremented by Y with carry
         Immediate,          //     #             OPC #$BB            operand is byte (BB)
-        Implied,            //     impl          OPC                 operand implied
+        Implicit,           //     impl          OPC                 operand implied
         Indirect,           //     ind           OPC ($HHLL)         operand is effective address; effective address is value of address
         XIndexedIndirect,   //     X, ind        OPC ($BB, X)        operand is effective zeropage address; effective address is byte (BB) incremented by X without carry
         IndirectYIndexed,   //     ind, Y        OPC ($LL), Y        operand is effective address incremented by Y with carry; effective address is word at zeropage address
