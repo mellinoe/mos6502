@@ -42,12 +42,12 @@ INY");
         public void INC_Absolute()
         {
             var cpu = TestUtil.CpuWithProgram(
-@"LDA #05
-STA $4000
-INC $4000
+@"INC $4000
 INC $4000
 INC $4000");
-            cpu.ProcessInstruction(3);
+
+            cpu.Memory.WriteU8(0x4000, 0x05);
+            cpu.ProcessInstruction();
             Assert.Equal(6, cpu.Memory.ReadU8(0x4000));
 
             cpu.ProcessInstruction();
@@ -61,13 +61,14 @@ INC $4000");
         public void INC_AbsoluteXIndexed()
         {
             var cpu = TestUtil.CpuWithProgram(
-@"LDA #05
-STA $4000
-LDX #01
+@"LDX #01
 INC $3FFF,X
 INC $3FFF,X
 INC $3FFF,X");
-            cpu.ProcessInstruction(4);
+
+            cpu.Memory.WriteU8(0x4000, 0x05);
+
+            cpu.ProcessInstruction(2);
             Assert.Equal(6, cpu.Memory.ReadU8(0x4000));
 
             cpu.ProcessInstruction();

@@ -73,15 +73,12 @@ STA $4000,Y");
         public void STA_XIndexedIndirect()
         {
             var cpu = TestUtil.CpuWithProgram(
-@"LDA #34
-STA $50
-LDA #12
-STA $51
-LDA #FF
+@"LDA #FF
 LDX #30
 STA ($20,X)");
+            cpu.Memory.WriteU16(0x50, 0x1234);
 
-            cpu.ProcessInstruction(7);
+            cpu.ProcessInstruction(3);
             Assert.Equal(0xFF, cpu.Memory.ReadU8(0x1234));
         }
 
@@ -89,15 +86,11 @@ STA ($20,X)");
         public void STA_IndirectYIndexed()
         {
             var cpu = TestUtil.CpuWithProgram(
-@"LDA #24
-STA $50
-LDA #12
-STA $51
-LDA #FF
+@"LDA #FF
 LDY #10
 STA ($50),Y");
-
-            cpu.ProcessInstruction(7);
+            cpu.Memory.WriteU16(0x50, 0x1224);
+            cpu.ProcessInstruction(3);
             Assert.Equal(0xFF, cpu.Memory.ReadU8(0x1234));
         }
     }

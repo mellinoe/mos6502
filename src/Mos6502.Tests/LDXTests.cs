@@ -25,10 +25,10 @@ LDX #03");
         public void LDX_ZeroPage()
         {
             var cpu = TestUtil.CpuWithProgram(
-@"LDA #FF
-STA $10
-LDX $10");
-            cpu.ProcessInstruction(3);
+@"LDX $10");
+            cpu.Memory.WriteU8(0x10, 0xFF);
+
+            cpu.ProcessInstruction();
             Assert.Equal(0xFF, cpu.X);
         }
 
@@ -36,11 +36,11 @@ LDX $10");
         public void LDX_ZeroPageYIndexed()
         {
             var cpu = TestUtil.CpuWithProgram(
-@"LDA #FF
-STA $10
-LDY #06
+@"LDY #06
 LDX $0A,Y");
-            cpu.ProcessInstruction(4);
+            cpu.Memory.WriteU8(0x10, 0xFF);
+
+            cpu.ProcessInstruction(2);
             Assert.Equal(0xFF, cpu.X);
         }
 
@@ -48,10 +48,10 @@ LDX $0A,Y");
         public void LDX_Absolute()
         {
             var cpu = TestUtil.CpuWithProgram(
-@"LDA #FF
-STA $4000
-LDX $4000");
-            cpu.ProcessInstruction(3);
+@"LDX $4000");
+            cpu.Memory.WriteU8(0x4000, 0xFF);
+
+            cpu.ProcessInstruction();
             Assert.Equal(0xFF, cpu.X);
         }
 
@@ -59,11 +59,11 @@ LDX $4000");
         public void LDX_AbsoluteYIndexed()
         {
             var cpu = TestUtil.CpuWithProgram(
-@"LDA #FF
-STA $4010
-LDY #10
+@"LDY #10
 LDX $4000,Y");
-            cpu.ProcessInstruction(4);
+            cpu.Memory.WriteU8(0x4010, 0xFF);
+
+            cpu.ProcessInstruction(2);
             Assert.Equal(0xFF, cpu.X);
         }
     }

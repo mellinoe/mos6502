@@ -52,13 +52,8 @@ ADC #01";
         public void ADC_Absolute()
         {
             var cpu = TestUtil.CpuWithProgram(
-@"LDA #0A
-STA $0300
-LDA #00
-ADC $0300");
-            cpu.ProcessInstruction();
-            cpu.ProcessInstruction();
-            cpu.ProcessInstruction();
+@"ADC $0300");
+            cpu.Memory.WriteU8(0x300, 0xA);
             cpu.ProcessInstruction();
             Assert.Equal(0xA, cpu.A);
         }
@@ -67,18 +62,9 @@ ADC $0300");
         public void ADC_Absolute_OverflowSetsCarry()
         {
             var cpu = TestUtil.CpuWithProgram(
-@"LDA #FF
-STA $0300
-LDA #01
-STA $0301
-LDA #00
-ADC $0300
+@"ADC $0300
 ADC $0301");
-            cpu.ProcessInstruction();
-            cpu.ProcessInstruction();
-            cpu.ProcessInstruction();
-            cpu.ProcessInstruction();
-            cpu.ProcessInstruction();
+            cpu.Memory.WriteU16(0x300, 0xFF01);
             cpu.ProcessInstruction();
             Assert.Equal(false, cpu.CarryFlag);
             cpu.ProcessInstruction();
